@@ -1,0 +1,122 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Job Portal</title>
+</head>
+<body>
+    <h1>Job Portal</h1>
+
+    <h2>Job Management</h2>
+    <form id="createJobForm">
+        <label for="title">Job Title:</label><br>
+        <input type="text" id="title" name="title" required><br>
+        <label for="company">Company:</label><br>
+        <input type="text" id="company" name="company" required><br>
+        <label for="location">Location:</label><br>
+        <input type="text" id="location" name="location"><br>
+        <label for="description">Description:</label><br>
+        <textarea id="description" name="description" rows="4" cols="50"></textarea><br>
+        <button type="submit">Create Job Listing</button>
+    </form>
+
+    <h3>All Job Listings</h3>
+    <ul id="jobListings"></ul>
+
+    <h2>Job Application</h2>
+    <form id="applyJobForm">
+        <label for="applicantName">Applicant Name:</label><br>
+        <input type="text" id="applicantName" name="applicantName" required><br>
+        <label for="applicantEmail">Applicant Email:</label><br>
+        <input type="email" id="applicantEmail" name="applicantEmail" required><br>
+        <label for="coverLetter">Cover Letter:</label><br>
+        <textarea id="coverLetter" name="coverLetter" rows="4" cols="50"></textarea><br>
+        <button type="submit">Apply for Job</button>
+    </form>
+
+    <script>
+
+        document.getElementById('createJobForm').addEventListener('submit', async function(event) {
+            event.preventDefault();
+
+            const formData = new FormData(this);
+            const requestBody = {};
+            formData.forEach((value, key) => {
+                requestBody[key] = value;
+            });
+
+            try {
+                console.log("Sending request to create job listing: ", requestBody);
+                const response = await fetch('/api/v1/jobs', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(requestBody)
+                });
+
+                console.log("Response received: ", response);
+                const newJobListing = await response.json();
+                console.log('New job listing created:', newJobListing);
+                alert('New job listing created!');
+                this.reset();
+            } catch (error) {
+                console.error('Error creating job listing:', error);
+                alert('Error creating job listing. Please try again.');
+            }
+        });
+
+
+        document.getElementById('applyJobForm').addEventListener('submit', async function(event) {
+            event.preventDefault();
+
+            const jobId = prompt('Enter the Job ID you want to apply for:');
+            if (!jobId) {
+                return;
+            }
+
+            const formData = new FormData(this);
+            const requestBody = {};
+            formData.forEach((value, key) => {
+                requestBody[key] = value;
+            });
+
+            try {
+                const response = await fetch(`/api/v1/apply/${jobId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(requestBody)
+                });
+
+                const newJobApplication = await response.json();
+                console.log('New job application created:', newJobApplication);
+                alert('New job application created!');
+                this.reset();
+            } catch (error) {
+                console.error('Error applying for job:', error);
+                alert('Error applying for job. Please try again.');
+            }
+        });
+
+        window.addEventListener('load', async () => {
+            try {
+                const response = await fetch('/api/v1/jobs');
+                const jobListings = await response.json();
+                const jobListingsUl = document.getElementById('jobListings');
+                jobListings.forEach(job => {
+                    const li = document.createElement('li');
+                    li.textContent = `Title: ${job.title}, Company: ${job.company}, Location: ${job.location}, Description: ${job.description}`;
+                    jobListingsUl.appendChild(li);
+                });
+            } catch (error) {
+                console.error('Error fetching job listings:', error);
+                alert('Error fetching job listings. Please refresh the page.');
+            }
+        });
+    </script>
+</body>
+</html>
